@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"os"
 	"log"
-	"blockchain_trade/pkg/models/sqlite"
-	// "blockchain_trade/internal/tickerstore"
+	"blockchain_trade/internal/sqlite"
+	"blockchain_trade/internal/tickerstore"
+	"blockchain_trade/internal/server"
 )
 
 func main() {
@@ -20,7 +21,10 @@ func main() {
 			tickersModel.Init()
 			log.Println("Init db completed")
 		}
-		// tickerStore := tickerstore.New(&tickersModel)
+
+		tickerStore := tickerstore.New(&tickersModel)
+		server.StartServer(tickerStore)
+
 		tickersModel.Close()
 	}
 }

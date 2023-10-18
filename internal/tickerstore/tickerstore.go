@@ -2,8 +2,8 @@ package tickerstore
 
 import (
 	"sync"
-	"blockchain_trade/pkg/models"
-	"blockchain_trade/pkg/models/sqlite"
+	"blockchain_trade/internal/models"
+	"blockchain_trade/internal/sqlite"
 )
 
 type TickerStore struct {
@@ -12,11 +12,11 @@ type TickerStore struct {
 	tickersDBModel *sqlite.TickersDBModel
 }
 
-func New(tickersDBModel *sqlite.TickersDBModel) TickerStore {
+func New(tickersDBModel *sqlite.TickersDBModel) *TickerStore {
 	tickerStore := TickerStore{}
 	tickerStore.tickers, _ = tickersDBModel.GetAll()
 	tickerStore.tickersDBModel = tickersDBModel
-	return tickerStore
+	return &tickerStore
 }
 
 func (tickerStore *TickerStore) GetAllTickers() []models.Ticker {
