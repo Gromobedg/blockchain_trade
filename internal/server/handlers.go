@@ -6,11 +6,28 @@ import (
 	"log"
 )
 
+type user struct {
+	username string
+	password string
+}
+
 func (tickerServer *tickerServer) GetAllTickerHandler(writer http.ResponseWriter, req *http.Request) {
-	log.Printf("handling get all tasks at %s\n", req.URL.Path)
+	log.Printf("handling get all tickers at %s\n", req.URL.Path)
 
 	allTickers := tickerServer.store.GetAllTickers()
 	renderJSON(writer, allTickers)
+}
+
+func (tickerServer *tickerServer) StopApp(writer http.ResponseWriter, req *http.Request) {
+	username, password, ok := req.BasicAuth()
+
+	if ok && verifyUser(user{username, password}) {
+		log.Printf("handling stop app at %s\n", req.URL.Path)
+	} else {
+		log.Printf("handling Unauthorized %s:%s\n", username, password)
+		writer.Header().Set("WWW-Authenticate", `Basic realm="api"`)
+    	http.Error(writer, "Unauthorized", http.StatusUnauthorized)
+	}
 }
 
 func renderJSON(writer http.ResponseWriter, value interface{}) {
@@ -21,4 +38,13 @@ func renderJSON(writer http.ResponseWriter, value interface{}) {
 	}
 	writer.Header().Set("Content-Type", "application/json")
 	writer.Write(json)
+}
+
+func verifyUser(user user) bool {
+	var users = map[string]string{
+		"nikita": "password",
+	}
+
+	password, hasUser := users[user.username]
+	return (hasUser && password == user.password)
 }

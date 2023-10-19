@@ -16,16 +16,26 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		tickersModel := sqlite.TickersDBModel{DB: db}
+		tickersDBModel := sqlite.TickersDBModel{DB: db}
 		if !dbAlreadyExists {
-			tickersModel.Init()
-			log.Println("Init db completed")
+			tickersDBModel.Init()
+			log.Println("DB started")
 		}
 
-		tickerStore := tickerstore.New(&tickersModel)
-		server.StartServer(tickerStore)
+		tickerStore := tickerstore.New()
+		tickerServer := server.Start(tickerStore)
+		log.Println("Rest started")
 
-		tickersModel.Close()
+		tickerInformer := informer.StartInformer(tickerStore)
+		log.Println("Informer started")
+
+		tickerStore.Init(&tickersDBModel)
+		log.Println("Init ticker store completed")
+
+		tickersDBModel.Save(tickerStore)
+		tickerInformer.Stop()
+		tickerServer.Stop()
+		tickersDBModel.Close()
 	}
 }
 

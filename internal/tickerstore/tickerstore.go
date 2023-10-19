@@ -12,11 +12,14 @@ type TickerStore struct {
 	tickersDBModel *sqlite.TickersDBModel
 }
 
-func New(tickersDBModel *sqlite.TickersDBModel) *TickerStore {
+func New() *TickerStore {
 	tickerStore := TickerStore{}
+	return &tickerStore
+}
+
+func (tickerStore *TickerStore) Init(tickersDBModel *sqlite.TickersDBModel) {
 	tickerStore.tickers, _ = tickersDBModel.GetAll()
 	tickerStore.tickersDBModel = tickersDBModel
-	return &tickerStore
 }
 
 func (tickerStore *TickerStore) GetAllTickers() []models.Ticker {

@@ -11,14 +11,14 @@ type tickerServer struct {
 	store *tickerstore.TickerStore
 }
 
-func StartServer(tickerStore *tickerstore.TickerStore) *tickerServer {
+func Start(tickerStore *tickerstore.TickerStore) *tickerServer {
 	router := mux.NewRouter().StrictSlash(true)
 	server := tickerServer{store: tickerStore}
 
 	router.HandleFunc("/api/tickers", server.GetAllTickerHandler).Methods("GET")
-	// router.HandleFunc("/api/quit", server.StopApp).Methods("POST")
+	router.HandleFunc("/api/quit", server.StopApp).Methods("POST")
 
-	http.ListenAndServe("localhost:8080", router)
-
+	go http.ListenAndServe("localhost:8080", router)
+	
 	return &server
 }
