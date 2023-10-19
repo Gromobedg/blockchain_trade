@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"os"
+	"os/signal"
+    "syscall"
 	"log"
 	"blockchain_trade/internal/sqlite"
 	"blockchain_trade/internal/tickerstore"
@@ -23,18 +25,24 @@ func main() {
 		}
 
 		tickerStore := tickerstore.New()
-		tickerServer := server.Start(tickerStore)
+		srv := server.Start(tickerStore)
 		log.Println("Rest started")
 
-		tickerInformer := informer.StartInformer(tickerStore)
-		log.Println("Informer started")
+		// tickerInformer := informer.StartInformer(tickerStore)
+		// log.Println("Informer started")
 
 		tickerStore.Init(&tickersDBModel)
 		log.Println("Init ticker store completed")
 
-		tickersDBModel.Save(tickerStore)
-		tickerInformer.Stop()
-		tickerServer.Stop()
+		signalCh := make(chan os.Signal, 1)
+    	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+
+		sig := <-signalCh
+    	log.Printf("Received signal: %v\n", sig)
+
+		// tickersDBModel.Save(tickerStore)
+		// tickerInformer.Stop()
+		server.Stop(srv)
 		tickersDBModel.Close()
 	}
 }
