@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"log"
+	"syscall"
 )
 
 type user struct {
@@ -23,6 +24,7 @@ func (tickerServer *tickerServer) StopApp(writer http.ResponseWriter, req *http.
 
 	if ok && verifyUser(user{username, password}) {
 		log.Printf("handling stop app at %s\n", req.URL.Path)
+		syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 	} else {
 		log.Printf("handling Unauthorized %s:%s\n", username, password)
 		writer.Header().Set("WWW-Authenticate", `Basic realm="api"`)

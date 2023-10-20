@@ -21,7 +21,7 @@ func Start(tickerStore *tickerstore.TickerStore) *http.Server {
 	router.HandleFunc("/api/tickers", tickerServer.GetAllTickerHandler).Methods("GET")
 	router.HandleFunc("/api/quit", tickerServer.StopApp).Methods("POST")
 
-	server := &http.Server{Addr: "localhost:8080", Handler: router}
+	server := &http.Server{Addr: "localhost:8081", Handler: router}
 	go server.ListenAndServe()
 
 	go func() {

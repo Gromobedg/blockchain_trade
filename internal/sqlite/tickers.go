@@ -32,12 +32,12 @@ SELECT symbol, price_24h, volume_24h, last_trade_price from tickers
 `
 )
 
-type TickersDBModel struct {
+type TickersDB struct {
 	DB *sql.DB
 }
 
-func (tickersDBModel *TickersDBModel) Init() error {
-	if _, err := tickersDBModel.DB.Exec(schemaSQL); err != nil {
+func (tickersDB *TickersDB) Init() error {
+	if _, err := tickersDB.DB.Exec(schemaSQL); err != nil {
 		return err
 	}
 
@@ -54,7 +54,7 @@ func (tickersDBModel *TickersDBModel) Init() error {
 		"ETH-USDT": {"ETH-USDT", 0, 0, 0},
 	}
 
-	if err := tickersDBModel.Flush(tickers); err != nil {
+	if err := tickersDB.Flush(tickers); err != nil {
 		fmt.Println("ERROR: insert - ", err)
 		return err
 	}
@@ -62,14 +62,14 @@ func (tickersDBModel *TickersDBModel) Init() error {
 	return nil
 }
 
-func (tickersDBModel *TickersDBModel) Flush(tickers map[string]models.Ticker) error {
-	stmt, err := tickersDBModel.DB.Prepare(insertSQL)
+func (tickersDB *TickersDB) Flush(tickers map[string]models.Ticker) error {
+	stmt, err := tickersDB.DB.Prepare(insertSQL)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	tx, err := tickersDBModel.DB.Begin()
+	tx, err := tickersDB.DB.Begin()
 	if err != nil {
 		return err
 	}
@@ -90,11 +90,11 @@ func (tickersDBModel *TickersDBModel) Flush(tickers map[string]models.Ticker) er
 	return stmt.Close()
 }
 
-func (tickersDBModel *TickersDBModel) GetAll() (map[string]models.Ticker, error) {
+func (tickersDB *TickersDB) GetAll() (map[string]models.Ticker, error) {
 	var tickers map[string]models.Ticker
 	tickers = make(map[string]models.Ticker)
 
-	rows, err := tickersDBModel.DB.Query(selectSQL)
+	rows, err := tickersDB.DB.Query(selectSQL)
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +122,8 @@ func (tickersDBModel *TickersDBModel) GetAll() (map[string]models.Ticker, error)
 	return tickers, rows.Close()
 }
 
-func (tickersDBModel *TickersDBModel) Close() error {
-	tickersDBModel.DB.Close()
+func (tickersDB *TickersDB) Close() error {
+	tickersDB.DB.Close()
 
 	return nil
 }

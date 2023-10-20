@@ -9,6 +9,7 @@ import (
 	"blockchain_trade/internal/sqlite"
 	"blockchain_trade/internal/tickerstore"
 	"blockchain_trade/internal/server"
+	"blockchain_trade/internal/informer"
 )
 
 func main() {
@@ -18,9 +19,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	} else {
-		tickersDBModel := sqlite.TickersDBModel{DB: db}
+		tickersDB := sqlite.TickersDB{DB: db}
 		if !dbAlreadyExists {
-			tickersDBModel.Init()
+			tickersDB.Init()
 			log.Println("DB started")
 		}
 
@@ -28,22 +29,27 @@ func main() {
 		srv := server.Start(tickerStore)
 		log.Println("Rest started")
 
-		// tickerInformer := informer.StartInformer(tickerStore)
-		// log.Println("Informer started")
+		tickerInformer := informer.StartInformer(tickerStore)
+		log.Println("Informer started")
 
-		tickerStore.Init(&tickersDBModel)
+		tickerStore.Init(&tickersDB)
 		log.Println("Init ticker store completed")
+
+		tickerGrabber := informer.StartGrabber(tickerStore, tickerInformer)
+		log.Println("Grabbers started")
 
 		signalCh := make(chan os.Signal, 1)
     	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
 
+		log.Println("App ready")
 		sig := <-signalCh
     	log.Printf("Received signal: %v\n", sig)
 
-		// tickersDBModel.Save(tickerStore)
-		// tickerInformer.Stop()
+		tickerStore.FlushToDB()
+		tickerGrabber.StopGrabber()
+		tickerInformer.StopInformer()
 		server.Stop(srv)
-		tickersDBModel.Close()
+		tickersDB.Close()
 	}
 }
 
