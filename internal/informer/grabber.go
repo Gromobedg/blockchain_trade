@@ -40,12 +40,11 @@ func StartGrabber(tickerStore *tickerstore.TickerStore, tickerInformer *tickerIn
 			for {
 				resp, err := http.DefaultClient.Do(req)
 				tickerGrabber.catchErr(err, symbol)
-				defer resp.Body.Close()
 				
 				var ticker models.Ticker
 				err = json.NewDecoder(resp.Body).Decode(&ticker)
+				resp.Body.Close()
 				tickerGrabber.catchErr(err, symbol)
-
 
 				if tickerStore.Save(ticker) {
 					tickerInformer.Log(ticker)
