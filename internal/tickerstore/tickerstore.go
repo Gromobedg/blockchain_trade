@@ -2,6 +2,7 @@ package tickerstore
 
 import (
 	"sync"
+	"log"
 	"blockchain_trade/internal/models"
 	"blockchain_trade/internal/sqlite"
 )
@@ -18,7 +19,11 @@ func New() *TickerStore {
 }
 
 func (tickerStore *TickerStore) Init(tickersDB *sqlite.TickersDB) {
-	tickerStore.tickers, _ = tickersDB.GetAll()
+	tickers, err := tickersDB.GetAll()
+	tickerStore.tickers = tickers
+	if err != nil {
+		log.Fatalf("Init ticker store failed: %s\n", err)
+	} 
 	tickerStore.tickersDB = tickersDB
 }
 
@@ -44,13 +49,23 @@ func (tickerStore *TickerStore) GetAllKeys() []string {
 	return allkeys
 }
 
-func (tickerStore *TickerStore) FlushToDB() error {
-	return tickerStore.tickersDB.Flush(tickerStore.tickers)
+func (tickerStore *TickerStore) FlushToDB() {
+	if err := tickerStore.tickersDB.Flush(tickerStore.tickers); err != nil {
+		log.Printf("Flush failed: %v\n", err)
+	}
 }
 
-func (tickerStore *TickerStore) Save(ticker models.Ticker) {
+func (tickerStore *TickerStore) Save(ticker models.Ticker) bool {
 	tickerStore.Lock()
 	defer tickerStore.Unlock()
 
-	tickerStore.tickers[ticker.Symbol] = ticker
+	currenTicker := tickerStore.tickers[ticker.Symbol]
+
+	if currenTicker == ticker {
+		return false
+	} else {
+		tickerStore.tickers[ticker.Symbol] = ticker
+	}
+
+	return true
 }

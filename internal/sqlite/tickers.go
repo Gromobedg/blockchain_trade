@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	_ "github.com/mattn/go-sqlite3"
 	"blockchain_trade/internal/models"
 )
@@ -36,9 +37,9 @@ type TickersDB struct {
 	DB *sql.DB
 }
 
-func (tickersDB *TickersDB) Init() error {
+func (tickersDB *TickersDB) Init() {
 	if _, err := tickersDB.DB.Exec(schemaSQL); err != nil {
-		return err
+		fmt.Println("Exec failed: ", err)
 	}
 
 	tickers := map[string]models.Ticker{
@@ -55,11 +56,8 @@ func (tickersDB *TickersDB) Init() error {
 	}
 
 	if err := tickersDB.Flush(tickers); err != nil {
-		fmt.Println("ERROR: insert - ", err)
-		return err
+		fmt.Println("Flush failed: ", err)
 	}
-
-	return nil
 }
 
 func (tickersDB *TickersDB) Flush(tickers map[string]models.Ticker) error {
@@ -122,8 +120,8 @@ func (tickersDB *TickersDB) GetAll() (map[string]models.Ticker, error) {
 	return tickers, rows.Close()
 }
 
-func (tickersDB *TickersDB) Close() error {
+func (tickersDB *TickersDB) Close() {
 	tickersDB.DB.Close()
 
-	return nil
+	log.Println("DB closed")
 }

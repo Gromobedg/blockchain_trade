@@ -3,11 +3,14 @@ package informer
 import (
 	"fmt"
 	"net/http"
-	"io/ioutil"
 	"context"
 	"log"
 	"time"
+	"encoding/json"
+	"runtime"
 	"blockchain_trade/internal/tickerstore"
+	"blockchain_trade/internal/models"
+	"blockchain_trade/internal/logerror"
 )
 
 type tickerGrabber struct {
@@ -32,12 +35,22 @@ func StartGrabber(tickerStore *tickerstore.TickerStore, tickerInformer *tickerIn
 	for _, symbol := range keys {
 		go func(symbol string) {
 			url := fmt.Sprintf("https://api.blockchain.com/v3/exchange/tickers/%s", symbol)
-			req, _ := http.NewRequest("GET", url, nil)
+			req, err := http.NewRequest("GET", url, nil)
+			tickerGrabber.catchErr(err, symbol)
 			for {
-				res, _ := http.DefaultClient.Do(req)
-				body, _ := ioutil.ReadAll(res.Body)
-				log.Println(string(body))
-				res.Body.Close()
+				resp, err := http.DefaultClient.Do(req)
+				tickerGrabber.catchErr(err, symbol)
+				defer resp.Body.Close()
+				
+				var ticker models.Ticker
+				err = json.NewDecoder(resp.Body).Decode(&ticker)
+				tickerGrabber.catchErr(err, symbol)
+
+
+				if tickerStore.Save(ticker) {
+					tickerInformer.Log(ticker)
+				}
+
 				select {
 				case <- ctx.Done():
 					tickerGrabber.doneChannel <- ("Stop grabber " + symbol)
@@ -49,6 +62,14 @@ func StartGrabber(tickerStore *tickerstore.TickerStore, tickerInformer *tickerIn
 	}
 
 	return &tickerGrabber
+}
+
+func (tickerGrabber *tickerGrabber) catchErr(err interface{}, symbol string) {
+	if err != nil {
+		logerror.Log(err)
+		tickerGrabber.doneChannel <- ("Stop grabber " + symbol)
+		runtime.Goexit()
+	}
 }
 
 func (tickerGrabber *tickerGrabber) StopGrabber() {

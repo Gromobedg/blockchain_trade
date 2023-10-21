@@ -45,6 +45,7 @@ func main() {
 		sig := <-signalCh
     	log.Printf("Received signal: %v\n", sig)
 
+		
 		tickerStore.FlushToDB()
 		tickerGrabber.StopGrabber()
 		tickerInformer.StopInformer()

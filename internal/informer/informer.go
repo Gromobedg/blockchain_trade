@@ -33,8 +33,10 @@ func StartInformer(tickerStore *tickerstore.TickerStore) *tickerInformer {
 			default:
 				select {
 				case ticker := <- tickerInformer.tickerChannel:
-					log.Printf("symbol: %s | price_24h: %f | volume_24h: %f | last_trade_price: %f\n", ticker.Symbol,)
-				case <- time.After(1 * time.Second):
+					log.Printf(
+						"symbol: %s | price_24h: %f | volume_24h: %f | last_trade_price: %f\n", 
+						ticker.Symbol, ticker.Price24h, ticker.Volume24h, ticker.LastTradePrice,)
+				case <- time.After(10 * time.Second):
 				}
 			}
 		}
